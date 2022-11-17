@@ -147,6 +147,9 @@ public:
         Compressing_Process.trans_to_char();
         Compressing_Process.serialize_CharStream_BitCodeMap();
 
+        std::cout << "Compressing process is over! " << std::endl;
+        std::cout << std::endl;
+
         return Compressing_Process.CharStream_BitCodeMap;
     }
 };

@@ -84,9 +84,6 @@ public:
             ++FreqMap[curr_char];
         }
         opt_file.close();
-
-        std::cout << "Scanning process is over! " << std::endl;
-        std::cout << std::endl;
     }
 
 public:
@@ -96,6 +93,9 @@ public:
         Scanning_Process.locate_source_file();
         Scanning_Process.copy_the_source_file();
         Scanning_Process.scan_opt_file();
+
+        std::cout << "Scanning process is over! " << std::endl;
+        std::cout << std::endl;
 
         return Scanning_Process.FreqMap;
     }
