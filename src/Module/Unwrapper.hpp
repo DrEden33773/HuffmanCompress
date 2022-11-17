@@ -18,7 +18,6 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <stdio.h>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -79,7 +78,7 @@ public:
             throw std::runtime_error("Cannot open `recode.txt`");
         }
 
-        char temp;
+        char temp = 0;
         while (Compressed_file.read(
             reinterpret_cast<char*>(&temp),
             sizeof(temp)
@@ -104,8 +103,8 @@ public:
         if (!SrcFile.is_open()) {
             throw std::runtime_error("Cannot open `recode.txt`");
         }
-        char unwrapped;
-        char src;
+        char unwrapped          = 0;
+        char src                = 0;
         int  unwrapped_char_num = 0;
         int  src_char_num       = 0;
         while (SrcFile.get(src)) {
