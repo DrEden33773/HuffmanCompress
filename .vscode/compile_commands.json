@@ -1,19 +1,17 @@
 [
   {
-    "directory": "e:\\CollegeLearningRepo\\DS_CurriculumDesign\\HuffmanCompress",
+    "directory": "/home/eden/CollegeLearningRepo/DS_CurriculumDesign/HuffmanCompress",
     "arguments": [
-      "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.33.31629\\bin\\HostX86\\x86\\cl.exe",
-      "/c",
-      "/EHsc",
-      "/nologo",
-      "/Zi",
-      "/FS",
-      "/Fdbuild\\windows\\x86\\debug\\compile.HuffmanCompress.pdb",
-      "/Od",
-      "/std:c++20",
-      "/Fobuild\\.objs\\HuffmanCompress\\windows\\x86\\debug\\src\\main.cpp.obj",
-      "src\\main.cpp"
+      "/usr/local/bin/gcc",
+      "-c",
+      "-m64",
+      "-g",
+      "-O0",
+      "-std=c++20",
+      "-o",
+      "build/.objs/HuffmanCompress/linux/x86_64/debug/src/main.cpp.o",
+      "src/main.cpp"
     ],
-    "file": "src\\main.cpp"
+    "file": "src/main.cpp"
   }
 ]

@@ -11,7 +11,10 @@
 
 #include "TaskManager.hpp"
 
+#include "Test/RunTest.hpp"
+
 int main(int argc, char** argv) {
-    bool IfSuccess = Task::run_all_task();
+    // bool IfSuccess = Task::run_all_task();
+    Test::RunTest();
     return 0;
 }
