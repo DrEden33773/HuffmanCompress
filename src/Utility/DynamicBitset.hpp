@@ -123,7 +123,7 @@ public:
             for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
                 to_push <<= 1;
             }
-            to_push = ~to_push; // 01111111 like
+            to_push = ~to_push; // 011111111 like
             CurrBox &= to_push;
         }
         // ---*--- end of core ---*---
