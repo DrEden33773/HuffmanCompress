@@ -11,14 +11,19 @@
 
 #pragma once
 
+#include "DynBitFurtherTest.hpp"
+#include "DynBitsetFileIOTest.hpp"
 #include "DynamicBitsetTest.hpp"
+
 #include <functional>
 #include <vector>
 
 namespace Test {
 
 static const std::vector<std::function<void()>> tests {
-    Test::DynamicBitsetTest,
+    DynamicBitsetTest,
+    DynBitFurtherTest,
+    DynBitsetFileIOTest,
 };
 
 void RunTest() {

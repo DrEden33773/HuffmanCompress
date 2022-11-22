@@ -23,25 +23,30 @@ namespace fs = std::filesystem;
 
 namespace Path {
     /* root */
-    static fs::path Root = "Files";
+    static const fs::path Root = "Files";
+
+    static const fs::path TestRoot = "TestFiles";
 
 } // namespace Path
 
 namespace Filename {
     /* Source.txt */
-    static fs::path SourceFile = Path::Root / "source.txt";
+    static const fs::path SourceFile = Path::Root / "source.txt";
     /* Huffman.txt */
-    static fs::path HuffmanCode = Path::Root / "Huffman.txt";
+    static const fs::path HuffmanCode = Path::Root / "Huffman.txt";
     /* code.dat */
-    static fs::path Compressed = Path::Root / "code.dat";
+    static const fs::path Compressed = Path::Root / "code.dat";
     /* recode.txt */
-    static fs::path Unwrapped = Path::Root / "recode.txt";
+    static const fs::path Unwrapped = Path::Root / "recode.txt";
+
+    static const fs::path TestDynBitset = Path::TestRoot / "dyn_bitset.dat";
 
 } // namespace Filename
 
 /* all_path in a vec */
-static std::vector<fs::path> all_path {
+static const std::vector<fs::path> all_path {
     Path::Root,
+    Path::TestRoot,
 };
 
 static void build_all_path() {

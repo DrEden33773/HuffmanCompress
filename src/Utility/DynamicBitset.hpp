@@ -21,6 +21,11 @@
 namespace Utility {
 
 class DynamicBitset {
+    /**
+     * @note
+        @e relation_between @b back_bit_index @p and @b num_of_bit
+            back_bit_index = num_of_bit % box_size - 1
+     */
 public:
     /* Type Aliases */
     using i16 = short;
@@ -44,7 +49,6 @@ public:
         u32 NumOfBit   = 0; // >=0
         u32 NumOfBox   = 1; // >=1
         u32 CurrBoxIdx = 0; // >=0
-        u32 CurrBitIdx = 0; // [0, box_size) => NumOfBit % box_size
     };
 
 private:
@@ -52,7 +56,6 @@ private:
     u32              NumOfBit   = 0; // >=0
     u32              NumOfBox   = 1; // >=1
     u32              CurrBoxIdx = 0; // >=0
-    u32              CurrBitIdx = 0; // [0, box_size) => NumOfBit % box_size
 
 private:
     void check_if_add_box() {
@@ -79,23 +82,15 @@ private:
     void update_NumOfBit_sub() {
         --NumOfBit;
     }
-    void update_CurrBitIdx() {
-        /**
-         * @brief This function should always operated @e after:
-                @b update_NumOfBit()
-                @b update_NumOfBit_sub()
-         */
-        u32 RawIdx = (NumOfBit - 1);
-        CurrBitIdx = RawIdx % box_size;
-    }
 
 public:
     template <typename functor>
     void for_each_bit(functor func) const {
         // 1. first deal with [0, NumOfBox - 2]
         for (u32 BoxIdx = 0; BoxIdx < NumOfBox - 1; ++BoxIdx) {
-            u32 Box = Data[BoxIdx];
-            while (Box) {
+            u32 Box        = Data[BoxIdx];
+            u32 LeftOptNum = box_size;
+            while (LeftOptNum--) {
                 u32 Bit = Box & 1;
                 func(Bit);
                 Box >>= 1;
@@ -103,7 +98,7 @@ public:
         }
         // 2. then deal with [NumOfBox - 1] (the last one)
         u32 LastBox    = Data[NumOfBox - 1];
-        u32 LeftOptNum = CurrBitIdx + 1;
+        u32 LeftOptNum = NumOfBit % box_size;
         while (LeftOptNum--) {
             u32 Bit = LastBox & 1;
             func(Bit);
@@ -119,27 +114,27 @@ public:
     }
 
     void push_back(const bool& in) {
-        check_if_add_box();  // may add box
-        update_NumOfBit();   // add bit, then update NumOfBit first (must be done first)
-        update_CurrBitIdx(); // use updated NumOfBit to get CurrBitIdx
+        check_if_add_box(); // may add box
         /* ---*--- core ---*--- */
-        u32& CurrBox = Data[CurrBoxIdx];
+        u32& CurrBox       = Data[CurrBoxIdx];
+        u32  NewBackBitIdx = NumOfBit % box_size;
         if (in) {
             u32 to_push = 1;
-            for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
+            for (u32 opt_time = 0; opt_time < NewBackBitIdx; ++opt_time) {
                 to_push <<= 1;
             }
-            // 100000000 like
+            // 00000000 1 00000000 like
             CurrBox |= to_push;
         } else {
             u32 to_push = 1;
-            for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
+            for (u32 opt_time = 0; opt_time < NewBackBitIdx; ++opt_time) {
                 to_push <<= 1;
             }
-            to_push = ~to_push; // 011111111 like
+            to_push = ~to_push; // 11111111 0 11111111 like
             CurrBox &= to_push;
         }
         /* ---*--- end of core ---*--- */
+        update_NumOfBit(); // update NumOfBit
     }
     void pop_back() {
         /**
@@ -149,8 +144,9 @@ public:
          */
 
         /* ---*--- core ---*--- */
-        u32& CurrBox = Data[CurrBoxIdx];
-        u32  to_push = 1;
+        u32& CurrBox    = Data[CurrBoxIdx];
+        u32  CurrBitIdx = NumOfBit % box_size - 1;
+        u32  to_push    = 1;
         for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
             to_push <<= 1;
         }
@@ -159,12 +155,12 @@ public:
         /* ---*--- end of core ---*--- */
 
         update_NumOfBit_sub();
-        update_CurrBitIdx();
         check_if_sub_box();
     }
     [[nodiscard]] bool back() const {
-        u32 CurrBox  = Data[CurrBoxIdx];
-        u32 bit_mask = 1;
+        u32 CurrBox    = Data[CurrBoxIdx];
+        u32 bit_mask   = 1;
+        u32 CurrBitIdx = NumOfBit % box_size - 1;
         for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
             bit_mask <<= 1;
         }
@@ -215,10 +211,18 @@ public:
             }
         }
     }
-    DynamicBitset(const std::initializer_list<bool>& init) {
-        for (const bool& bit : init) {
-            push_back(bit);
-        }
+
+    void sync_necessary_info(const Info& info) {
+        NumOfBit   = info.NumOfBit;
+        NumOfBox   = info.NumOfBox;
+        CurrBoxIdx = info.CurrBoxIdx;
+    }
+    [[nodiscard]] Info get_necessary_info() const {
+        return Info {
+            .NumOfBit   = NumOfBit,
+            .NumOfBox   = NumOfBox,
+            .CurrBoxIdx = CurrBoxIdx,
+        };
     }
 
     friend bool operator==(
@@ -232,11 +236,9 @@ public:
                 But that will be less efficient
          *
          */
-        // {
-        //     std::string lhs_serial = lhs.convert_to_CharStream();
-        //     std::string rhs_serial = rhs.convert_to_CharStream();
-        //     return lhs_serial == rhs_serial;
-        // }
+        // std::string lhs_serial = lhs.convert_to_CharStream();
+        // std::string rhs_serial = rhs.convert_to_CharStream();
+        // return lhs_serial == rhs_serial;
 
         /**
          * @brief The current code is used when:
@@ -245,10 +247,13 @@ public:
                 And it's the most efficient one
          *
          */
-        bool Data       = lhs.Data == rhs.Data;
-        bool NumOfBit   = lhs.NumOfBit == rhs.NumOfBit;
-        bool CurrBitIdx = lhs.CurrBitIdx == rhs.CurrBitIdx;
-        return Data && NumOfBit && CurrBitIdx;
+        if (&rhs == &lhs) {
+            // self cmp
+            return true;
+        }
+        bool Data     = lhs.Data == rhs.Data;
+        bool NumOfBit = lhs.NumOfBit == rhs.NumOfBit;
+        return Data && NumOfBit;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const DynamicBitset& obj) {
@@ -258,10 +263,36 @@ public:
         return os;
     }
     friend std::fstream& operator<<(std::fstream& os, const DynamicBitset& obj) {
-        obj.for_each_box([&](const u32& box) {
-            os.write((char*)(&box), sizeof(box));
+        Info header_info = obj.get_necessary_info();
+        os.write(reinterpret_cast<char*>(&header_info), sizeof(header_info));
+        obj.for_each_box([&](u32 box) {
+            os.write(reinterpret_cast<char*>(&box), sizeof(box));
         });
         return os;
+    }
+    friend void operator>>(std::fstream& is, DynamicBitset& obj) {
+        // 1. reset all status
+        obj.Data.clear();
+        obj.NumOfBit   = 0;
+        obj.NumOfBox   = 0;
+        obj.CurrBoxIdx = 0;
+
+        // 2. get header_info
+        Info received_info;
+        is.read(
+            reinterpret_cast<char*>(&received_info),
+            sizeof(received_info)
+        );
+        obj.sync_necessary_info(received_info);
+
+        // 3. directly read
+        u32 Box = 0;
+        while (is.read(
+            reinterpret_cast<char*>(&Box),
+            sizeof(Box)
+        )) {
+            obj.Data.push_back(Box);
+        }
     }
 
     [[nodiscard]] u32 get_NumOfBit() const {
@@ -273,9 +304,6 @@ public:
     [[nodiscard]] u32 get_CurrBoxIdx() const {
         return CurrBoxIdx;
     }
-    [[nodiscard]] u32 get_CurrBitIdx() const {
-        return CurrBitIdx;
-    }
     void set_NumOfBit(const u32& new_v) {
         NumOfBit = new_v;
     }
@@ -284,9 +312,6 @@ public:
     }
     void set_CurrBoxIdx(const u32& new_v) {
         CurrBoxIdx = new_v;
-    }
-    void set_CurrBitIdx(const u32& new_v) {
-        CurrBitIdx = new_v;
     }
 };
 

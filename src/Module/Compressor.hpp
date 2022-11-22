@@ -33,6 +33,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "../Utility/DynamicBitset.hpp"
 #include "../Utility/FileManager.hpp"
 #include "../Utility/HuffmanTree.hpp"
 
@@ -66,7 +67,7 @@ public:
         HuffmanTree the_tree(CharFreqList);
         CharStream_BitCodeMap = the_tree.get_bitcode_map();
     }
-    void trans_to_char() {
+    void compress_to_CharStream() {
         std::fstream sourceFile;
         std::fstream compressed;
 
@@ -97,8 +98,35 @@ public:
         sourceFile.close();
         compressed.close();
     }
-    void compress_to_bitstream() {
-        // TODO(eden): SO F**KING HARD!
+    void compress_to_BitStream() {
+        std::fstream sourceFile;
+        std::fstream compressed;
+        std::string  CharStream;
+
+        // 1. first get the CharStream
+        sourceFile.open(SourceFile_path, std::fstream::in);
+        if (!sourceFile.is_open()) {
+            throw std::runtime_error("Cannot open `source.txt`!");
+        }
+        char receiver;
+        while (sourceFile.get(receiver)) {
+            CharStream += CharStream_BitCodeMap[receiver];
+        }
+        sourceFile.close();
+
+        // 2. trans CharStream to BitStream
+        Utility::DynamicBitset BitStream(CharStream);
+
+        // 3. serialize BitStream
+        compressed.open(
+            Compressed_path,
+            std::fstream::binary | std::fstream::out | std::fstream::trunc
+        );
+        if (!compressed.is_open()) {
+            throw std::runtime_error("Cannot open `code.dat`!");
+        }
+        compressed << BitStream;
+        compressed.close();
     }
     void serialize_CharStream_BitCodeMap() {
         std::fstream BitCodeMap_file;
@@ -112,13 +140,16 @@ public:
             char curr_char = CharFreqPair.first;
             int  curr_freq = CharFreqPair.second;
             if (curr_char == '\t') {
-                BitCodeMap_file << "<Tab>"
+                BitCodeMap_file << "__Tab"
                                 << " ";
             } else if (curr_char == '\n') {
-                BitCodeMap_file << "<NewLine>"
+                BitCodeMap_file << "__NewLine"
                                 << " ";
             } else if (curr_char == ' ') {
-                BitCodeMap_file << "<Space>"
+                BitCodeMap_file << "__Space"
+                                << " ";
+            } else if (curr_char == '\r') {
+                BitCodeMap_file << "__WindowsNewLine"
                                 << " ";
             } else {
                 BitCodeMap_file << curr_char
@@ -144,7 +175,8 @@ public:
         Compressing_Process.get_CharFreqList(in);
         Compressing_Process.get_CharStream_BitCodeMap();
 
-        Compressing_Process.trans_to_char();
+        // Compressing_Process.compress_to_CharStream();
+        Compressing_Process.compress_to_BitStream();
         Compressing_Process.serialize_CharStream_BitCodeMap();
 
         std::cout << "Compressing process is over! " << std::endl;

@@ -14,6 +14,7 @@
 #pragma once
 
 #include <cassert>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -22,6 +23,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "../Utility/DynamicBitset.hpp"
 #include "../Utility/FileManager.hpp"
 #include "../Utility/HuffmanTree.hpp"
 
@@ -66,8 +68,7 @@ public:
             );
         }
     }
-    void unwrap_from_char() {
-
+    void unwrap_from_CharStream() {
         Compressed_file.open(Compressed_path, std::fstream::binary | std::fstream::in);
         if (!Compressed_file.is_open()) {
             throw std::runtime_error("Cannot open `code.dat`");
@@ -92,6 +93,28 @@ public:
     }
     void unwrap_from_bitstream() {
         // TODO(eden): SO F**KING HARD!
+        // 1. receive the whole BitStream
+        Compressed_file.open(Compressed_path, std::fstream::binary | std::fstream::in);
+        if (!Compressed_file.is_open()) {
+            throw std::runtime_error("Cannot open `code.dat`");
+        }
+        Utility::DynamicBitset BitStream_Receiver;
+        Compressed_file >> BitStream_Receiver;
+        Compressed_file.close();
+
+        // 2. get the whole CharStream
+        std::string CharStream_Receiver = BitStream_Receiver.convert_to_CharStream();
+
+        // 3. parse the whole CharStream
+        Unwrapped_file.open(Unwrapped_path, std::fstream::out | std::fstream::trunc);
+        if (!Unwrapped_file.is_open()) {
+            throw std::runtime_error("Cannot open `recode.txt`");
+        }
+        for (const char& curr : CharStream_Receiver) {
+            CharStream.push_back(curr);
+            CharStreamParser();
+        }
+        Unwrapped_file.close();
     }
     bool if_result_is_right() {
         bool res = true;
@@ -133,12 +156,57 @@ public:
         return true;
     }
 
+    void show_src_size() {
+        std::cout << "Source File's size(byte) => ";
+        std::cout << std::filesystem::file_size(SrcFile_path);
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+    void show_expected_compressed_size() {
+        size_t expected_byte_size = 0;
+        size_t expected_bits      = 0;
+
+        std::fstream BitMapFile;
+        BitMapFile.open(
+            Utility::FileManager::Filename::HuffmanCode,
+            std::fstream::in
+        );
+        if (!BitMapFile.is_open()) {
+            throw std::runtime_error("Cannot open SrcFile!");
+        }
+
+        std::string tag;
+        size_t      freq = 0;
+        std::string code;
+        while (BitMapFile >> tag >> freq >> code) {
+            size_t size_of_code = code.size();
+            expected_bits += freq * size_of_code;
+        }
+
+        BitMapFile.close();
+
+        expected_byte_size = (expected_bits / 8);
+
+        std::cout << "Expected Compressed File's size(byte) => ";
+        std::cout << expected_byte_size;
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+    void show_compressed_size() {
+        std::cout << "Compressed File's size(byte) => ";
+        std::cout << std::filesystem::file_size(Compressed_path);
+        std::cout << std::endl;
+        std::cout << std::endl;
+    }
+
 public:
     static bool Unwrap(const CharStream_BitCodeMap_Type& in) {
         Unwrapper Unwrapping_Process;
 
         Unwrapping_Process.get_CharStreamBitCodeMap(in);
-        Unwrapping_Process.unwrap_from_char();
+        // Unwrapping_Process.unwrap_from_CharStream();
+        Unwrapping_Process.unwrap_from_bitstream();
+
         assert(Unwrapping_Process.if_result_is_right());
 
         std::cout << "UnwrappedFile == SrcFile, Success!" << std::endl;
@@ -148,6 +216,10 @@ public:
         std::cout << ">>> " << std::filesystem::absolute(Unwrapping_Process.Unwrapped_path);
         std::cout << std::endl;
         std::cout << std::endl;
+
+        Unwrapping_Process.show_src_size();
+        Unwrapping_Process.show_expected_compressed_size();
+        Unwrapping_Process.show_compressed_size();
 
         return true;
     }

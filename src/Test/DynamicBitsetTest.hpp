@@ -37,19 +37,6 @@ void DynamicBitsetTest() {
 
     std::cout << "check_helper == src_dyn_bitset, assert succeed!" << std::endl;
     std::cout << std::endl;
-
-    std::cout << src_dyn_bitset << std::endl; // 01011010110
-    src_dyn_bitset.pop_back();
-    std::cout << src_dyn_bitset << std::endl; // 0101101011
-    src_dyn_bitset.pop_back();
-    std::cout << src_dyn_bitset << std::endl; // 010110101
-
-    std::cout << src_dyn_bitset.back() << std::endl; // 1
-    std::cout << std::endl;
-
-    src_dyn_bitset.push_back(false);
-    std::cout << src_dyn_bitset << std::endl; // 0101101010
-    std::cout << std::endl;
 }
 
 } // namespace Test
