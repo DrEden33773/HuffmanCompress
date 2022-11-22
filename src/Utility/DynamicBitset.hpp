@@ -39,6 +39,14 @@ public:
     static constexpr u32 u32_bits  = u32_bytes * 8;
     static constexpr u32 box_size  = u32_bits;
 
+    /* Necessary Info during `Deserialization` */
+    struct Info {
+        u32 NumOfBit   = 0; // >=0
+        u32 NumOfBox   = 1; // >=1
+        u32 CurrBoxIdx = 0; // >=0
+        u32 CurrBitIdx = 0; // [0, box_size) => NumOfBit % box_size
+    };
+
 private:
     std::vector<u32> Data       = { all_false };
     u32              NumOfBit   = 0; // >=0
@@ -72,6 +80,11 @@ private:
         --NumOfBit;
     }
     void update_CurrBitIdx() {
+        /**
+         * @brief This function should always operated @e after:
+                @b update_NumOfBit()
+                @b update_NumOfBit_sub()
+         */
         u32 RawIdx = (NumOfBit - 1);
         CurrBitIdx = RawIdx % box_size;
     }
@@ -109,7 +122,7 @@ public:
         check_if_add_box();  // may add box
         update_NumOfBit();   // add bit, then update NumOfBit first (must be done first)
         update_CurrBitIdx(); // use updated NumOfBit to get CurrBitIdx
-        // ---*--- core ---*---
+        /* ---*--- core ---*--- */
         u32& CurrBox = Data[CurrBoxIdx];
         if (in) {
             u32 to_push = 1;
@@ -126,14 +139,28 @@ public:
             to_push = ~to_push; // 011111111 like
             CurrBox &= to_push;
         }
-        // ---*--- end of core ---*---
+        /* ---*--- end of core ---*--- */
     }
     void pop_back() {
-        // you have to set highest bit to `0`
+        /**
+         * @brief This function could make sure that:
+                Each unused bit will be `0`
+                Each popped bit will be reset to `0` later
+         */
+
+        /* ---*--- core ---*--- */
+        u32& CurrBox = Data[CurrBoxIdx];
+        u32  to_push = 1;
+        for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
+            to_push <<= 1;
+        }
+        to_push = ~to_push; // 011111111 like
+        CurrBox &= to_push;
+        /* ---*--- end of core ---*--- */
 
         update_NumOfBit_sub();
         update_CurrBitIdx();
-        check_if_sub_box(); // may sub box
+        check_if_sub_box();
     }
     [[nodiscard]] bool back() const {
         u32 CurrBox  = Data[CurrBoxIdx];
@@ -153,7 +180,7 @@ public:
     }
     [[nodiscard]] std::string convert_to_CharStream() const {
         std::string ret;
-        // ---*--- core ---*---
+        /* ---*--- core ---*--- */
         for_each_bit([&](const u32& Bit) {
             if (Bit) {
                 ret.push_back('1');
@@ -161,7 +188,7 @@ public:
                 ret.push_back('0');
             }
         });
-        // ---*--- end of core ---*---
+        /* ---*--- end of core ---*--- */
         return ret;
     }
     void convert_from_CharStream(const std::string& CharStream) {
@@ -198,10 +225,30 @@ public:
         const DynamicBitset& lhs,
         const DynamicBitset& rhs
     ) {
-        bool if_Data     = lhs.Data == rhs.Data;
-        bool if_NumOfBit = lhs.NumOfBit == rhs.NumOfBit;
-        bool if_NumOfBox = lhs.NumOfBox == rhs.NumOfBox;
-        return if_Data && if_NumOfBit && if_NumOfBox;
+        /**
+         * @brief The discarded code is used when:
+                DynamicBitset can't guarantee the protocol:
+                    @b unused/popped_bit @e equals @b `0`
+                But that will be less efficient
+         *
+         */
+        // {
+        //     std::string lhs_serial = lhs.convert_to_CharStream();
+        //     std::string rhs_serial = rhs.convert_to_CharStream();
+        //     return lhs_serial == rhs_serial;
+        // }
+
+        /**
+         * @brief The current code is used when:
+                DynamicBitset can guarantee the protocol:
+                    @b unused/popped_bit @e equals @b `0`
+                And it's the most efficient one
+         *
+         */
+        bool Data       = lhs.Data == rhs.Data;
+        bool NumOfBit   = lhs.NumOfBit == rhs.NumOfBit;
+        bool CurrBitIdx = lhs.CurrBitIdx == rhs.CurrBitIdx;
+        return Data && NumOfBit && CurrBitIdx;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const DynamicBitset& obj) {
