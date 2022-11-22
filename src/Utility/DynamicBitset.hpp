@@ -32,9 +32,7 @@ public:
 
     /* Bit Masks */
     static constexpr u32 all_true  = 0xffffffff;
-    static constexpr u32 all_false = 0x0000000;
-    static constexpr u32 low_true  = 0x0000001;
-    static constexpr u32 low_false = 0x0000001;
+    static constexpr u32 all_false = 0;
 
     /* Conversion Info */
     static constexpr u32 u32_bytes = sizeof(u32);
@@ -58,16 +56,29 @@ private:
         ++NumOfBox;
         ++CurrBoxIdx;
     }
+    void check_if_sub_box() {
+        bool if_add_box = NumOfBit % box_size == 0 && NumOfBit;
+        if (!if_add_box) {
+            return;
+        }
+        Data.pop_back();
+        --NumOfBox;
+        --CurrBoxIdx;
+    }
     void update_NumOfBit() {
         ++NumOfBit;
     }
+    void update_NumOfBit_sub() {
+        --NumOfBit;
+    }
     void update_CurrBitIdx() {
-        CurrBitIdx = NumOfBit % box_size - 1;
+        u32 RawIdx = (NumOfBit - 1);
+        CurrBitIdx = RawIdx % box_size;
     }
 
 public:
     template <typename functor>
-    void for_each_bit(functor func) {
+    void for_each_bit(functor func) const {
         // 1. first deal with [0, NumOfBox - 2]
         for (u32 BoxIdx = 0; BoxIdx < NumOfBox - 1; ++BoxIdx) {
             u32 Box = Data[BoxIdx];
@@ -87,7 +98,7 @@ public:
         }
     }
     template <typename functor>
-    void for_each_box(functor func) {
+    void for_each_box(functor func) const {
         for (u32 BoxIdx = 0; BoxIdx < NumOfBox; ++BoxIdx) {
             u32 Box = Data[BoxIdx];
             func(Box);
@@ -95,21 +106,52 @@ public:
     }
 
     void push_back(const bool& in) {
-        check_if_add_box(); // may add box
-        update_NumOfBit();
-        update_CurrBitIdx();
+        check_if_add_box();  // may add box
+        update_NumOfBit();   // add bit, then update NumOfBit first (must be done first)
+        update_CurrBitIdx(); // use updated NumOfBit to get CurrBitIdx
         // ---*--- core ---*---
         u32& CurrBox = Data[CurrBoxIdx];
         if (in) {
-            u32 to_add = low_true;
+            u32 to_push = 1;
             for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
-                to_add <<= 1;
+                to_push <<= 1;
             }
-            CurrBox += to_add;
+            // 100000000 like
+            CurrBox |= to_push;
+        } else {
+            u32 to_push = 1;
+            for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
+                to_push <<= 1;
+            }
+            to_push = ~to_push; // 01111111 like
+            CurrBox &= to_push;
         }
         // ---*--- end of core ---*---
     }
-    std::string convert_to_CharStream() {
+    void pop_back() {
+        // you have to set highest bit to `0`
+
+        update_NumOfBit_sub();
+        update_CurrBitIdx();
+        check_if_sub_box(); // may sub box
+    }
+    [[nodiscard]] bool back() const {
+        u32 CurrBox  = Data[CurrBoxIdx];
+        u32 bit_mask = 1;
+        for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
+            bit_mask <<= 1;
+        }
+        u32 received = bit_mask & CurrBox;
+        for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
+            received >>= 1;
+        }
+        u32 res = received;
+        if (res) {
+            return true;
+        }
+        return false;
+    }
+    [[nodiscard]] std::string convert_to_CharStream() const {
         std::string ret;
         // ---*--- core ---*---
         for_each_bit([&](const u32& Bit) {
@@ -137,7 +179,7 @@ public:
     explicit DynamicBitset(const std::string& CharStream) {
         convert_from_CharStream(CharStream);
     }
-    DynamicBitset(const std::initializer_list<u32> init) {
+    DynamicBitset(const std::initializer_list<u32>& init) {
         for (const u32& bit : init) {
             if (bit) {
                 push_back(true);
@@ -146,7 +188,7 @@ public:
             }
         }
     }
-    DynamicBitset(const std::initializer_list<bool> init) {
+    DynamicBitset(const std::initializer_list<bool>& init) {
         for (const bool& bit : init) {
             push_back(bit);
         }
@@ -160,6 +202,44 @@ public:
         bool if_NumOfBit = lhs.NumOfBit == rhs.NumOfBit;
         bool if_NumOfBox = lhs.NumOfBox == rhs.NumOfBox;
         return if_Data && if_NumOfBit && if_NumOfBox;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const DynamicBitset& obj) {
+        obj.for_each_bit([](const u32& bit) {
+            std::cout << bit;
+        });
+        return os;
+    }
+    friend std::fstream& operator<<(std::fstream& os, const DynamicBitset& obj) {
+        obj.for_each_box([&](const u32& box) {
+            os.write((char*)(&box), sizeof(box));
+        });
+        return os;
+    }
+
+    [[nodiscard]] u32 get_NumOfBit() const {
+        return NumOfBit;
+    }
+    [[nodiscard]] u32 get_NumOfBox() const {
+        return NumOfBox;
+    }
+    [[nodiscard]] u32 get_CurrBoxIdx() const {
+        return CurrBoxIdx;
+    }
+    [[nodiscard]] u32 get_CurrBitIdx() const {
+        return CurrBitIdx;
+    }
+    void set_NumOfBit(const u32& new_v) {
+        NumOfBit = new_v;
+    }
+    void set_NumOfBox(const u32& new_v) {
+        NumOfBox = new_v;
+    }
+    void set_CurrBoxIdx(const u32& new_v) {
+        CurrBoxIdx = new_v;
+    }
+    void set_CurrBitIdx(const u32& new_v) {
+        CurrBitIdx = new_v;
     }
 };
 

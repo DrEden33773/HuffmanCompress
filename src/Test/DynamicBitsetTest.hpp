@@ -19,30 +19,36 @@
 namespace Test {
 
 void DynamicBitsetTest() {
-    std::string src = "01011010101";
+    std::string src = "01011010110";
 
     Utility::DynamicBitset src_dyn_bitset(src);
 
-    src_dyn_bitset.for_each_bit([](const auto& bit) {
-        if (bit) {
-            std::cout << "1 ";
-        } else {
-            std::cout << "0 ";
-        }
-    });
-    std::cout << std::endl;
+    std::cout << src_dyn_bitset << std::endl; // 01011010110
     std::cout << std::endl;
 
-    std::string received = src_dyn_bitset.convert_to_CharStream();
+    std::string received = src_dyn_bitset.convert_to_CharStream(); // "01011010110"
     std::cout << "original => " << src << std::endl;
     std::cout << std::endl;
     std::cout << "received => " << received << std::endl;
     std::cout << std::endl;
 
-    Utility::DynamicBitset check_helper(received);
-    assert(check_helper == src_dyn_bitset);
+    Utility::DynamicBitset check_helper(received); // 01011010110
+    assert(check_helper == src_dyn_bitset);        // success
 
     std::cout << "check_helper == src_dyn_bitset, assert succeed!" << std::endl;
+    std::cout << std::endl;
+
+    std::cout << src_dyn_bitset << std::endl; // 01011010110
+    src_dyn_bitset.pop_back();
+    std::cout << src_dyn_bitset << std::endl; // 0101101011
+    src_dyn_bitset.pop_back();
+    std::cout << src_dyn_bitset << std::endl; // 010110101
+
+    std::cout << src_dyn_bitset.back() << std::endl; // 1
+    std::cout << std::endl;
+
+    src_dyn_bitset.push_back(false);
+    std::cout << src_dyn_bitset << std::endl; // 0101101010
     std::cout << std::endl;
 }
 
