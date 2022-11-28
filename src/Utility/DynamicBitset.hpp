@@ -231,7 +231,7 @@ public:
     ) {
         /**
          * @brief The discarded code is used when:
-                DynamicBitset can't guarantee the protocol:
+                DynamicBitset @b cannot_guarantee the @p protocol:
                     @b unused/popped_bit @e equals @b `0`
                 But that will be less efficient
          *
@@ -242,7 +242,7 @@ public:
 
         /**
          * @brief The current code is used when:
-                DynamicBitset can guarantee the protocol:
+                DynamicBitset @b can_guarantee the @p protocol:
                     @b unused/popped_bit @e equals @b `0`
                 And it's the most efficient one
          *
@@ -293,25 +293,6 @@ public:
         )) {
             obj.Data.push_back(Box);
         }
-    }
-
-    [[nodiscard]] u32 get_NumOfBit() const {
-        return NumOfBit;
-    }
-    [[nodiscard]] u32 get_NumOfBox() const {
-        return NumOfBox;
-    }
-    [[nodiscard]] u32 get_CurrBoxIdx() const {
-        return CurrBoxIdx;
-    }
-    void set_NumOfBit(const u32& new_v) {
-        NumOfBit = new_v;
-    }
-    void set_NumOfBox(const u32& new_v) {
-        NumOfBox = new_v;
-    }
-    void set_CurrBoxIdx(const u32& new_v) {
-        CurrBoxIdx = new_v;
     }
 };
 

@@ -72,19 +72,19 @@ void DynBitFurtherTest() {
         // std::cout << "A and B execute `pop_back()` 7 times" << std::endl;
         // std::cout << std::endl;
 
-        std::cout << "A => " << A << std::endl;
-        std::cout << std::endl;
-        std::cout << "B => " << B << std::endl;
-        std::cout << std::endl;
-        std::cout << "A.back => " << A.back() << std::endl;
-        std::cout << std::endl;
-        std::cout << "B.back => " << B.back() << std::endl;
-        std::cout << std::endl;
+        // std::cout << "A => " << A << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "B => " << B << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "A.back => " << A.back() << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "B.back => " << B.back() << std::endl;
+        // std::cout << std::endl;
 
-        assert(A == B);
+        // assert(A == B);
 
-        std::cout << "A == B, assert succeed!" << std::endl;
-        std::cout << std::endl;
+        // std::cout << "A == B, assert succeed!" << std::endl;
+        // std::cout << std::endl;
     }
 }
 

@@ -23,19 +23,19 @@ void DynamicBitsetTest() {
 
     Utility::DynamicBitset src_dyn_bitset(src);
 
-    std::cout << src_dyn_bitset << std::endl; // 01011010110
+    std::cout << "original_bitset => " << src_dyn_bitset << std::endl; // 01011010110
     std::cout << std::endl;
 
     std::string received = src_dyn_bitset.convert_to_CharStream(); // "01011010110"
-    std::cout << "original => " << src << std::endl;
+    std::cout << "original_string => " << src << std::endl;
     std::cout << std::endl;
-    std::cout << "received => " << received << std::endl;
+    std::cout << "received_string => " << received << std::endl;
     std::cout << std::endl;
 
     Utility::DynamicBitset check_helper(received); // 01011010110
     assert(check_helper == src_dyn_bitset);        // success
 
-    std::cout << "check_helper == src_dyn_bitset, assert succeed!" << std::endl;
+    std::cout << "new_bitset == original_bitset, assert succeed!" << std::endl;
     std::cout << std::endl;
 }
 
