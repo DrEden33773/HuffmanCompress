@@ -146,12 +146,12 @@ public:
         /* ---*--- core ---*--- */
         u32& CurrBox    = Data[CurrBoxIdx];
         u32  CurrBitIdx = NumOfBit % box_size - 1;
-        u32  to_push    = 1;
+        u32  to_pop     = 1;
         for (u32 opt_time = 0; opt_time < CurrBitIdx; ++opt_time) {
-            to_push <<= 1;
+            to_pop <<= 1;
         }
-        to_push = ~to_push; // 011111111 like
-        CurrBox &= to_push;
+        to_pop = ~to_pop; // 11111111 0 11111111 like
+        CurrBox &= to_pop;
         /* ---*--- end of core ---*--- */
 
         update_NumOfBit_sub();
@@ -257,8 +257,8 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& os, const DynamicBitset& obj) {
-        obj.for_each_bit([](const u32& bit) {
-            std::cout << bit;
+        obj.for_each_bit([&](const u32& bit) {
+            os << bit;
         });
         return os;
     }
