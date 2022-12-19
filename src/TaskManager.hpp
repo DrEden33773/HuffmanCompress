@@ -21,7 +21,7 @@
 namespace Task {
 
 template <class Arg, class F>
-auto operator|(Arg&& arg, F&& f) -> decltype(f(std::forward<Arg>(arg))) {
+auto operator|(Arg&& arg, F&& f) {
     return f(std::forward<Arg>(arg));
 }
 
