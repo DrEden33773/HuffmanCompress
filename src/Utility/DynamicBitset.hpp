@@ -85,7 +85,7 @@ private:
 
 public:
     template <typename functor>
-    void for_each_bit(functor func) const {
+    void for_each_bit(functor func = [](const u32& _) {}) const {
         // 1. first deal with [0, NumOfBox - 2]
         for (u32 BoxIdx = 0; BoxIdx < NumOfBox - 1; ++BoxIdx) {
             u32 Box        = Data[BoxIdx];
@@ -106,7 +106,7 @@ public:
         }
     }
     template <typename functor>
-    void for_each_box(functor func) const {
+    void for_each_box(functor func = [](const u32& _) {}) const {
         for (u32 BoxIdx = 0; BoxIdx < NumOfBox; ++BoxIdx) {
             u32 Box = Data[BoxIdx];
             func(Box);
